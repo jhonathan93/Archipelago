@@ -1,0 +1,34 @@
+<component name="ProjectDictionaryState">
+  <dictionary name="project">
+    <words>
+      <w>accesslog</w>
+      <w>alertmanager</w>
+      <w>alertmanagers</w>
+      <w>alertname</w>
+      <w>allkeys</w>
+      <w>appendfsync</w>
+      <w>appendonly</w>
+      <w>apppass</w>
+      <w>appuser</w>
+      <w>containerização</w>
+      <w>ehlo</w>
+      <w>entrypoints</w>
+      <w>errstr</w>
+      <w>everysec</w>
+      <w>exposedbydefault</w>
+      <w>initdb</w>
+      <w>loadbalancer</w>
+      <w>mailhog</w>
+      <w>maxmemory</w>
+      <w>mysqld</w>
+      <w>padmin</w>
+      <w>piechart</w>
+      <w>requirepass</w>
+      <w>smarthost</w>
+      <w>traefik</w>
+      <w>tsdb</w>
+      <w>websecure</w>
+      <w>worldmap</w>
+    </words>
+  </dictionary>
+</component>

@@ -1,0 +1,48 @@
+services:
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.network=${NETWORK_NAME:-app-network}"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.entrypoint=metrics"
+      - "--entrypoints.metrics.address=:8082"
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--ping=true"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+      - "8082:8082"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/data
+    networks:
+      - ${NETWORK_NAME:-app-network}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.dashboard.entrypoints=web"
+      - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
+
+volumes:
+  traefik_data:
+    name: traefik_data
+
+networks:
+  app-network:
+    name: ${NETWORK_NAME:-app-network}
+    external: true

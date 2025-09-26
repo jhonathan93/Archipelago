@@ -1,0 +1,56 @@
+services:
+  database:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-admin123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-minha_app}
+      MYSQL_USER: ${MYSQL_USER:-appuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-apppass}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./config/mysql.cnf:/etc/mysql/conf.d/custom.cnf:ro
+      - ./init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - ${NETWORK_NAME:-app-network}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-admin123}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --innodb-buffer-pool-size=256M
+      --max-connections=200
+
+  mysql-exporter:
+    image: prom/mysqld-exporter:v0.14.0
+    container_name: mysql_exporter
+    restart: unless-stopped
+    ports:
+      - "9104:9104"
+    environment:
+      DATA_SOURCE_NAME: "root:${MYSQL_ROOT_PASSWORD:-admin123}@tcp(mysql_db:3306)/"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - ${NETWORK_NAME:-app-network}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9104/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  db_data:
+    name: mysql_data
+
+networks:
+  app-network:
+    name: ${NETWORK_NAME:-app-network}
+    external: true

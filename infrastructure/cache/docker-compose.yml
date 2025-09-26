@@ -1,0 +1,55 @@
+services:
+  cache:
+    image: redis:7-alpine
+    container_name: redis_cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-admin123}
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_data:/data
+    networks:
+      - ${NETWORK_NAME:-app-network}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-admin123}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: redis_exporter
+    restart: unless-stopped
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: "redis://redis_cache:6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-admin123}"
+    depends_on:
+      cache:
+        condition: service_healthy
+    networks:
+      - ${NETWORK_NAME:-app-network}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9121/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  redis_data:
+    name: redis_data
+
+networks:
+  app-network:
+    name: ${NETWORK_NAME:-app-network}
+    external: true

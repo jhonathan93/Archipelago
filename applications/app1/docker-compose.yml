@@ -1,0 +1,27 @@
+services:
+  app1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: app1
+    volumes:
+      - ./src:/var/www/html/
+    environment:
+      DB_HOST: mysql_db
+      REDIS_HOST: redis_cache
+      MAIL_HOST: mailhog
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app1.rule=Host(`app1.localhost`)"
+      - "traefik.http.routers.app1.service=app1"
+      - "traefik.http.services.app1.loadbalancer.server.port=80"
+
+      - "traefik.http.routers.loadbalancer.rule=Host(`localhost`)"
+      - "traefik.http.routers.loadbalancer.service=apps"
+      - "traefik.http.services.apps.loadbalancer.server.port=80"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    external: true
